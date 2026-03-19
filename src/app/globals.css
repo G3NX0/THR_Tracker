@@ -1,0 +1,22 @@
+﻿@import "tailwindcss";
+
+:root {
+  --background: #f7fbf8;
+  --foreground: #062e26;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-plus-jakarta);
+  --font-serif: var(--font-lora);
+}
+
+* {
+  border-color: theme(colors.emerald.100);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
