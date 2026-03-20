@@ -9,6 +9,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { CircleOff, TrendingDown, TrendingUp } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { CategoryTotal } from "@/lib/statistics";
@@ -36,9 +37,15 @@ export function StatisticsSection({
         </CardHeader>
         <CardContent className="pt-2">
           {expenseByCategory.length === 0 ? (
-            <p className="text-sm text-emerald-700">
-              Belum ada data pengeluaran untuk ditampilkan.
-            </p>
+            <div className="flex flex-col items-center gap-2 rounded-xl bg-emerald-50 px-4 py-6 text-center">
+              <CircleOff className="h-4 w-4 text-emerald-500" />
+              <p className="text-sm font-medium text-emerald-900">
+                Belum ada data pengeluaran
+              </p>
+              <p className="text-sm text-emerald-700">
+                Tambahkan transaksi keluar untuk melihat ringkasan kategori.
+              </p>
+            </div>
           ) : (
             <>
               <div className="space-y-2.5 md:hidden">
@@ -104,7 +111,10 @@ export function StatisticsSection({
         </CardHeader>
         <CardContent className="space-y-2.5 pt-2">
           {topIncoming.length === 0 ? (
-            <p className="text-sm text-emerald-700">Belum ada transaksi masuk.</p>
+            <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-3 text-sm text-emerald-700">
+              <TrendingUp className="h-4 w-4 text-emerald-500" />
+              Belum ada transaksi masuk untuk ditampilkan.
+            </div>
           ) : (
             topIncoming.map((item, index) => (
               <div
@@ -129,7 +139,10 @@ export function StatisticsSection({
         </CardHeader>
         <CardContent className="space-y-2.5 pt-2">
           {topOutgoing.length === 0 ? (
-            <p className="text-sm text-emerald-700">Belum ada transaksi keluar.</p>
+            <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-3 py-3 text-sm text-emerald-700">
+              <TrendingDown className="h-4 w-4 text-amber-500" />
+              Belum ada transaksi keluar untuk ditampilkan.
+            </div>
           ) : (
             topOutgoing.map((item, index) => (
               <div

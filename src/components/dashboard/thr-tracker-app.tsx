@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useMemo, useState } from "react";
+import { SearchX } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -15,6 +16,14 @@ import { TransactionFormDialog } from "@/components/transactions/transaction-for
 import { TransactionList } from "@/components/transactions/transaction-list";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTransactionFilters } from "@/hooks/use-transaction-filters";
 import { useTransactions } from "@/hooks/use-transactions";
@@ -65,6 +74,9 @@ export function ThrTrackerApp({ userEmail }: ThrTrackerAppProps) {
   const [formOpen, setFormOpen] = useState(false);
   const [goalFormOpen, setGoalFormOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [pendingDeleteTransaction, setPendingDeleteTransaction] =
+    useState<Transaction | null>(null);
+  const [isGoalDeleteConfirmOpen, setIsGoalDeleteConfirmOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
 
@@ -128,17 +140,17 @@ export function ThrTrackerApp({ userEmail }: ThrTrackerAppProps) {
   };
 
   const handleDelete = async (transaction: Transaction) => {
-    const shouldDelete = window.confirm(
-      `Hapus transaksi \"${transaction.name}\" sebesar ${formatCurrencyIDR(transaction.amount)}?`,
-    );
+    setPendingDeleteTransaction(transaction);
+  };
 
-    if (!shouldDelete) {
+  const confirmDeleteTransaction = async () => {
+    if (!pendingDeleteTransaction) {
       return;
     }
-
     try {
-      await remove(transaction.id);
+      await remove(pendingDeleteTransaction.id);
       toast.success("Transaksi berhasil dihapus.");
+      setPendingDeleteTransaction(null);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Terjadi kesalahan saat menghapus.";
@@ -164,17 +176,10 @@ export function ThrTrackerApp({ userEmail }: ThrTrackerAppProps) {
       return;
     }
 
-    const shouldDelete = window.confirm(
-      `Hapus goal \"${goal.title}\" dari dashboard?`,
-    );
-
-    if (!shouldDelete) {
-      return;
-    }
-
     try {
       await removeGoal();
       toast.success("Goal THR berhasil direset.");
+      setIsGoalDeleteConfirmOpen(false);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Terjadi kesalahan saat menghapus goal.";
@@ -235,7 +240,7 @@ export function ThrTrackerApp({ userEmail }: ThrTrackerAppProps) {
             error={goalError}
             onCreate={handleOpenGoalDialog}
             onEdit={handleOpenGoalDialog}
-            onDelete={() => void handleGoalDelete()}
+            onDelete={() => setIsGoalDeleteConfirmOpen(true)}
             onRetry={() => void refreshGoal()}
           />
 
@@ -268,8 +273,16 @@ export function ThrTrackerApp({ userEmail }: ThrTrackerAppProps) {
             </div>
             {filtered.length === 0 && transactions.length > 0 ? (
               <Card>
-                <CardContent className="py-8 text-center text-sm text-emerald-700">
-                  Tidak ada transaksi yang cocok dengan filter saat ini.
+                <CardContent className="flex flex-col items-center gap-2 py-8 text-center">
+                  <div className="rounded-full bg-emerald-100 p-2 text-emerald-600">
+                    <SearchX className="h-4 w-4" />
+                  </div>
+                  <p className="text-sm font-medium text-emerald-900">
+                    Tidak ada transaksi yang cocok
+                  </p>
+                  <p className="text-sm text-emerald-700">
+                    Coba ubah filter atau kata pencarian untuk melihat data lain.
+                  </p>
                 </CardContent>
               </Card>
             ) : (
@@ -310,6 +323,88 @@ export function ThrTrackerApp({ userEmail }: ThrTrackerAppProps) {
         isSubmitting={isGoalMutating}
         onSubmit={handleGoalSubmit}
       />
+
+      <Dialog
+        open={Boolean(pendingDeleteTransaction)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingDeleteTransaction(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Hapus transaksi?</DialogTitle>
+            <DialogDescription>
+              {pendingDeleteTransaction ? (
+                <>
+                  Transaksi <span className="font-semibold">{pendingDeleteTransaction.name}</span>{" "}
+                  sebesar{" "}
+                  <span className="font-semibold">
+                    {formatCurrencyIDR(pendingDeleteTransaction.amount)}
+                  </span>{" "}
+                  akan dihapus permanen.
+                </>
+              ) : (
+                "Transaksi ini akan dihapus permanen."
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setPendingDeleteTransaction(null)}
+              disabled={isMutating}
+            >
+              Batal
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => void confirmDeleteTransaction()}
+              disabled={isMutating}
+            >
+              Hapus
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isGoalDeleteConfirmOpen}
+        onOpenChange={setIsGoalDeleteConfirmOpen}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reset Goal THR?</DialogTitle>
+            <DialogDescription>
+              {goal ? (
+                <>
+                  Goal <span className="font-semibold">{goal.title}</span> akan dihapus dari
+                  dashboard.
+                </>
+              ) : (
+                "Goal akan dihapus dari dashboard."
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsGoalDeleteConfirmOpen(false)}
+              disabled={isGoalMutating}
+            >
+              Batal
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => void handleGoalDelete()}
+              disabled={isGoalMutating}
+            >
+              Hapus
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
