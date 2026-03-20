@@ -18,6 +18,12 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  DEFAULT_TRANSACTION_AMOUNT,
+  MIN_TRANSACTION_AMOUNT,
+  MIN_TRANSACTION_AMOUNT_LABEL,
+  QUICK_TRANSACTION_AMOUNTS,
+} from "@/lib/transaction-amount";
+import {
   transactionFormSchema,
   type TransactionFormValues,
 } from "@/lib/validation";
@@ -33,15 +39,13 @@ interface TransactionFormDialogProps {
   onSubmit: (values: TransactionFormValues) => Promise<void>;
 }
 
-const quickAmountOptions = [50_000, 100_000, 200_000, 500_000];
-
 function getDefaultValues(): TransactionFormValues {
   return {
     type: "masuk",
     date: toDateInputValue(),
     name: "",
     category: "keluarga",
-    amount: 0,
+    amount: DEFAULT_TRANSACTION_AMOUNT,
     notes: "",
   };
 }
@@ -104,131 +108,143 @@ export function TransactionFormDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {isEditMode ? "Edit Transaksi" : "Tambah Transaksi"}
-          </DialogTitle>
-          <DialogDescription>
-            {isEditMode
-              ? "Perbarui data transaksi THR Anda."
-              : "Input transaksi THR masuk atau keluar dengan cepat."}
-          </DialogDescription>
-        </DialogHeader>
+        <form className="flex min-h-0 flex-1 flex-col overflow-hidden" onSubmit={handleSubmit}>
+          <DialogHeader className="shrink-0 border-b border-emerald-100 pb-3 pr-10">
+            <DialogTitle>
+              {isEditMode ? "Edit Transaksi" : "Tambah Transaksi"}
+            </DialogTitle>
+            <DialogDescription>
+              {isEditMode
+                ? "Perbarui data transaksi THR Anda."
+                : "Input transaksi THR masuk atau keluar dengan cepat."}
+            </DialogDescription>
+          </DialogHeader>
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="type">Jenis Transaksi</Label>
-              <Select id="type" {...form.register("type")}> 
-                <option value="masuk">Masuk</option>
-                <option value="keluar">Keluar</option>
-              </Select>
-              {form.formState.errors.type ? (
-                <p className="text-xs text-rose-600">
-                  {form.formState.errors.type.message}
-                </p>
-              ) : null}
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto py-3 pr-1">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="type">Jenis Transaksi</Label>
+                <Select id="type" {...form.register("type")}>
+                  <option value="masuk">Masuk</option>
+                  <option value="keluar">Keluar</option>
+                </Select>
+                {form.formState.errors.type ? (
+                  <p className="text-xs text-rose-600">
+                    {form.formState.errors.type.message}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="date">Tanggal</Label>
+                <Input id="date" type="date" {...form.register("date")} />
+                {form.formState.errors.date ? (
+                  <p className="text-xs text-rose-600">
+                    {form.formState.errors.date.message}
+                  </p>
+                ) : null}
+              </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="date">Tanggal</Label>
-              <Input id="date" type="date" {...form.register("date")} />
-              {form.formState.errors.date ? (
-                <p className="text-xs text-rose-600">
-                  {form.formState.errors.date.message}
-                </p>
-              ) : null}
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="name">Nama Pihak / Tujuan</Label>
-            <Input
-              id="name"
-              placeholder="Contoh: Om Joko atau Beli kue lebaran"
-              {...form.register("name")}
-            />
-            {form.formState.errors.name ? (
-              <p className="text-xs text-rose-600">
-                {form.formState.errors.name.message}
-              </p>
-            ) : null}
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="category">Kategori</Label>
-              <Select id="category" {...form.register("category")}>
-                {categoryOptions.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </Select>
-              {form.formState.errors.category ? (
-                <p className="text-xs text-rose-600">
-                  {form.formState.errors.category.message}
-                </p>
-              ) : null}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="amount">Nominal (IDR)</Label>
+              <Label htmlFor="name">Nama Pihak / Tujuan</Label>
               <Input
-                id="amount"
-                type="number"
-                min={1}
-                step={1000}
-                placeholder="Contoh: 150000"
-                {...form.register("amount", { valueAsNumber: true })}
+                id="name"
+                placeholder="Contoh: Om Joko atau Beli kue lebaran"
+                {...form.register("name")}
               />
-              {form.formState.errors.amount ? (
+              {form.formState.errors.name ? (
                 <p className="text-xs text-rose-600">
-                  {form.formState.errors.amount.message}
+                  {form.formState.errors.name.message}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="category">Kategori</Label>
+                <Select id="category" {...form.register("category")}>
+                  {categoryOptions.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </Select>
+                {form.formState.errors.category ? (
+                  <p className="text-xs text-rose-600">
+                    {form.formState.errors.category.message}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="amount">Nominal (IDR)</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  min={MIN_TRANSACTION_AMOUNT}
+                  step={1}
+                  inputMode="numeric"
+                  placeholder={`Minimal ${MIN_TRANSACTION_AMOUNT_LABEL}`}
+                  {...form.register("amount", { valueAsNumber: true })}
+                />
+                {form.formState.errors.amount ? (
+                  <p className="text-xs text-rose-600">
+                    {form.formState.errors.amount.message}
+                  </p>
+                ) : (
+                  <p className="text-xs text-emerald-600/80">
+                    Masukkan angka bulat tanpa titik atau koma.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+              {QUICK_TRANSACTION_AMOUNTS.map((amount) => (
+                <Button
+                  key={amount}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full sm:w-auto"
+                  onClick={() =>
+                    form.setValue("amount", amount, { shouldValidate: true })
+                  }
+                >
+                  {`Rp${amount.toLocaleString("id-ID")}`}
+                </Button>
+              ))}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="notes">Catatan (Opsional)</Label>
+              <Textarea
+                id="notes"
+                rows={2}
+                placeholder="Contoh: Belanja untuk ketupat dan kue kering"
+                {...form.register("notes")}
+                className="sm:min-h-24"
+              />
+              {form.formState.errors.notes ? (
+                <p className="text-xs text-rose-600">
+                  {form.formState.errors.notes.message}
                 </p>
               ) : null}
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {quickAmountOptions.map((amount) => (
-              <Button
-                key={amount}
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => form.setValue("amount", amount, { shouldValidate: true })}
-              >
-                {`Rp${amount.toLocaleString("id-ID")}`}
-              </Button>
-            ))}
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="notes">Catatan (Opsional)</Label>
-            <Textarea
-              id="notes"
-              rows={3}
-              placeholder="Contoh: Belanja untuk ketupat dan kue kering"
-              {...form.register("notes")}
-            />
-            {form.formState.errors.notes ? (
-              <p className="text-xs text-rose-600">
-                {form.formState.errors.notes.message}
-              </p>
-            ) : null}
-          </div>
-
-          <DialogFooter>
+          <DialogFooter className="mt-3 shrink-0 border-t border-emerald-100 pt-3 sm:mt-4 sm:pt-4">
             <Button
               type="button"
               variant="outline"
+              className="w-full sm:w-auto"
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
             >
               Batal
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" className="w-full sm:w-auto" disabled={isSubmitting}>
               {isSubmitting
                 ? "Menyimpan..."
                 : isEditMode

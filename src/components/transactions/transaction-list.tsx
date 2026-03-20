@@ -42,92 +42,56 @@ export function TransactionList({
 
   return (
     <section className="space-y-4">
-      <div className="space-y-3 md:hidden">
-        {transactions.map((item) => (
-          <Card key={item.id}>
-            <CardContent className="space-y-3 p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-emerald-950">{item.name}</p>
-                  <p className="text-xs text-emerald-700">{formatDateID(item.date)}</p>
-                </div>
-                <Badge variant={item.type}>{formatTypeLabel(item.type)}</Badge>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-xs text-emerald-700">Kategori</p>
-                  <p className="font-medium capitalize text-emerald-900">{item.category}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-emerald-700">Nominal</p>
-                  <p className="font-semibold text-emerald-900">
-                    {formatCurrencyIDR(item.amount)}
-                  </p>
-                </div>
-              </div>
-
-              {item.notes ? (
-                <p className="rounded-xl bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
-                  {item.notes}
-                </p>
-              ) : null}
-
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onEdit(item)}
-                  disabled={isMutating}
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                  Edit
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => onDelete(item)}
-                  disabled={isMutating}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Hapus
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <div className="hidden overflow-x-auto rounded-2xl border border-emerald-100 bg-white shadow-sm md:block">
+      <div className="overflow-hidden rounded-2xl border border-emerald-100 bg-white shadow-sm">
         <table className="min-w-full text-sm">
           <thead className="bg-emerald-50/70 text-left text-xs uppercase tracking-wide text-emerald-700">
             <tr>
-              <th className="px-4 py-3 font-semibold">Tanggal</th>
-              <th className="px-4 py-3 font-semibold">Jenis</th>
-              <th className="px-4 py-3 font-semibold">Nama</th>
-              <th className="px-4 py-3 font-semibold">Kategori</th>
-              <th className="px-4 py-3 font-semibold">Nominal</th>
-              <th className="px-4 py-3 font-semibold">Catatan</th>
-              <th className="px-4 py-3 font-semibold text-right">Aksi</th>
+              <th className="px-3 py-3 font-semibold md:hidden">Info</th>
+              <th className="hidden px-4 py-3 font-semibold md:table-cell">Tanggal</th>
+              <th className="hidden px-4 py-3 font-semibold md:table-cell">Jenis</th>
+              <th className="hidden px-4 py-3 font-semibold md:table-cell">Nama</th>
+              <th className="hidden px-4 py-3 font-semibold md:table-cell">Kategori</th>
+              <th className="px-3 py-3 font-semibold text-right md:px-4 md:text-left">
+                Nominal
+              </th>
+              <th className="hidden px-4 py-3 font-semibold md:table-cell">Catatan</th>
+              <th className="px-3 py-3 font-semibold text-right md:px-4">Aksi</th>
             </tr>
           </thead>
           <tbody>
             {transactions.map((item) => (
               <tr key={item.id} className="border-t border-emerald-100/80">
-                <td className="px-4 py-3 text-emerald-800">{formatDateID(item.date)}</td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-3 md:hidden">
+                  <div className="min-w-0">
+                    <p className="break-words font-medium text-emerald-950">{item.name}</p>
+                    <div className="mt-1 flex items-center gap-2">
+                      <p className="text-xs text-emerald-700">{formatDateID(item.date)}</p>
+                      <Badge variant={item.type}>{formatTypeLabel(item.type)}</Badge>
+                    </div>
+                  </div>
+                </td>
+                <td className="hidden px-4 py-3 text-emerald-800 md:table-cell">
+                  {formatDateID(item.date)}
+                </td>
+                <td className="hidden px-4 py-3 md:table-cell">
                   <Badge variant={item.type}>{formatTypeLabel(item.type)}</Badge>
                 </td>
-                <td className="px-4 py-3 font-medium text-emerald-950">{item.name}</td>
-                <td className="px-4 py-3 capitalize text-emerald-800">{item.category}</td>
-                <td className="px-4 py-3 font-semibold text-emerald-900">
-                  {formatCurrencyIDR(item.amount)}
+                <td className="hidden px-4 py-3 font-medium text-emerald-950 md:table-cell">
+                  {item.name}
                 </td>
-                <td className="max-w-64 px-4 py-3 text-emerald-700">
+                <td className="hidden px-4 py-3 capitalize text-emerald-800 md:table-cell">
+                  {item.category}
+                </td>
+                <td className="px-3 py-3 text-right md:px-4 md:text-left">
+                  <p className="text-[15px] font-semibold text-emerald-900 md:text-sm">
+                    {formatCurrencyIDR(item.amount)}
+                  </p>
+                </td>
+                <td className="hidden max-w-64 break-words px-4 py-3 text-emerald-700 md:table-cell">
                   {item.notes ? item.notes : "-"}
                 </td>
-                <td className="px-4 py-3">
-                  <div className="flex justify-end gap-2">
+                <td className="px-3 py-3 md:px-4">
+                  <div className="grid grid-cols-2 gap-1.5 md:flex md:justify-end md:gap-2">
                     <Button
                       variant="outline"
                       size="sm"
@@ -135,7 +99,7 @@ export function TransactionList({
                       disabled={isMutating}
                     >
                       <Pencil className="h-3.5 w-3.5" />
-                      Edit
+                      <span className="hidden min-[420px]:inline md:inline">Edit</span>
                     </Button>
                     <Button
                       variant="destructive"
@@ -144,7 +108,7 @@ export function TransactionList({
                       disabled={isMutating}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
-                      Hapus
+                      <span className="hidden min-[420px]:inline md:inline">Hapus</span>
                     </Button>
                   </div>
                 </td>

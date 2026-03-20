@@ -26,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id" className={`${plusJakarta.variable} ${lora.variable} h-full`}>
-      <body className="min-h-full bg-gradient-to-b from-emerald-50 via-[#f7f8f2] to-[#fffaf0] font-sans text-emerald-950 antialiased">
+      <body className="flex min-h-full flex-col bg-gradient-to-b from-emerald-50 via-[#f7f8f2] to-[#fffaf0] font-sans text-emerald-950 antialiased">
         {children}
         <Toaster richColors position="top-center" />
       </body>

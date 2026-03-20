@@ -1,17 +1,17 @@
 ﻿import { redirect } from "next/navigation";
 
-import { ThrTrackerApp } from "@/components/dashboard/thr-tracker-app";
+import { LoginForm } from "@/components/auth/login-form";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
 
-export default async function HomePage() {
+export default async function LoginPage() {
   const supabase = await getSupabaseServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
-    redirect("/login");
+  if (user) {
+    redirect("/");
   }
 
-  return <ThrTrackerApp userEmail={user.email ?? "Pengguna"} />;
+  return <LoginForm />;
 }

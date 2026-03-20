@@ -1,6 +1,8 @@
-﻿import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Database } from "@/types/database";
+import { getSupabaseEnv } from "@/lib/supabase/config";
 
 let browserClient: SupabaseClient<Database> | null = null;
 
@@ -9,15 +11,16 @@ export function getSupabaseBrowserClient() {
     return browserClient;
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const { supabaseUrl, supabaseAnonKey } = getSupabaseEnv();
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error(
-      "Environment variable Supabase belum lengkap. Isi NEXT_PUBLIC_SUPABASE_URL dan NEXT_PUBLIC_SUPABASE_ANON_KEY.",
-    );
-  }
+  browserClient = createBrowserClient<Database>(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      flowType: "pkce",
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+  });
 
-  browserClient = createClient<Database>(supabaseUrl, supabaseAnonKey);
   return browserClient;
 }

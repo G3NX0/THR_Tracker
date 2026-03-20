@@ -1,4 +1,5 @@
-﻿import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import { getAuthenticatedUserId } from "@/lib/auth-user";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database";
 import type { Transaction, TransactionInput } from "@/types/transaction";
 
@@ -11,11 +12,18 @@ function mapRowToTransaction(row: TransactionRow): Transaction {
   };
 }
 
+function toIntegerAmount(value: number) {
+  return Math.trunc(value);
+}
+
 export async function getTransactions() {
   const supabase = getSupabaseBrowserClient();
+  const userId = await getAuthenticatedUserId();
+
   const { data, error } = await supabase
     .from("transactions")
     .select("*")
+    .eq("user_id", userId)
     .order("date", { ascending: false })
     .order("created_at", { ascending: false });
 
@@ -29,14 +37,17 @@ export async function getTransactions() {
 
 export async function createTransaction(input: TransactionInput) {
   const supabase = getSupabaseBrowserClient();
+  const userId = await getAuthenticatedUserId();
+
   const { data, error } = await supabase
     .from("transactions")
     .insert({
+      user_id: userId,
       type: input.type,
       date: input.date,
       name: input.name,
       category: input.category,
-      amount: input.amount,
+      amount: toIntegerAmount(input.amount),
       notes: input.notes?.trim() || null,
     })
     .select("*")
@@ -51,6 +62,8 @@ export async function createTransaction(input: TransactionInput) {
 
 export async function updateTransaction(id: string, input: TransactionInput) {
   const supabase = getSupabaseBrowserClient();
+  const userId = await getAuthenticatedUserId();
+
   const { data, error } = await supabase
     .from("transactions")
     .update({
@@ -58,10 +71,11 @@ export async function updateTransaction(id: string, input: TransactionInput) {
       date: input.date,
       name: input.name,
       category: input.category,
-      amount: input.amount,
+      amount: toIntegerAmount(input.amount),
       notes: input.notes?.trim() || null,
     })
     .eq("id", id)
+    .eq("user_id", userId)
     .select("*")
     .single();
 
@@ -74,7 +88,13 @@ export async function updateTransaction(id: string, input: TransactionInput) {
 
 export async function deleteTransaction(id: string) {
   const supabase = getSupabaseBrowserClient();
-  const { error } = await supabase.from("transactions").delete().eq("id", id);
+  const userId = await getAuthenticatedUserId();
+
+  const { error } = await supabase
+    .from("transactions")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", userId);
 
   if (error) {
     throw new Error(error.message);

@@ -37,7 +37,7 @@ const summaryItems = [
 
 export function SummaryCards({ summary }: SummaryCardsProps) {
   return (
-    <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <section className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 lg:grid-cols-4">
       {summaryItems.map((item) => {
         const Icon = item.icon;
         const value = summary[item.key];
@@ -48,12 +48,14 @@ export function SummaryCards({ summary }: SummaryCardsProps) {
 
         return (
           <Card key={item.key}>
-            <CardHeader className="flex flex-row items-center justify-between pb-1">
-              <CardTitle>{item.label}</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between gap-2 pb-1.5">
+              <CardTitle className="text-xs leading-snug sm:text-sm">{item.label}</CardTitle>
               <Icon className="h-4 w-4 text-emerald-500" />
             </CardHeader>
-            <CardContent>
-              <p className={`text-lg font-semibold sm:text-xl ${item.valueClassName}`}>
+            <CardContent className="pt-1">
+              <p
+                className={`break-words text-[15px] font-semibold leading-tight sm:text-xl ${item.valueClassName}`}
+              >
                 {formattedValue}
               </p>
             </CardContent>

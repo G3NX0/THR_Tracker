@@ -29,6 +29,7 @@ export function TransactionFilters({
         <Button
           variant={type === "all" ? "default" : "outline"}
           size="sm"
+          className="min-w-[84px] flex-1 sm:min-w-[92px] sm:flex-none"
           onClick={() => onTypeChange("all")}
         >
           Semua
@@ -36,6 +37,7 @@ export function TransactionFilters({
         <Button
           variant={type === "masuk" ? "default" : "outline"}
           size="sm"
+          className="min-w-[84px] flex-1 sm:min-w-[92px] sm:flex-none"
           onClick={() => onTypeChange("masuk")}
         >
           Masuk
@@ -43,13 +45,14 @@ export function TransactionFilters({
         <Button
           variant={type === "keluar" ? "default" : "outline"}
           size="sm"
+          className="min-w-[84px] flex-1 sm:min-w-[92px] sm:flex-none"
           onClick={() => onTypeChange("keluar")}
         >
           Keluar
         </Button>
       </div>
 
-      <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_240px]">
+      <div className="mt-3 grid gap-3 md:grid-cols-[minmax(0,1fr)_240px]">
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-400" />
           <Input

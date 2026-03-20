@@ -1,11 +1,18 @@
 ﻿"use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { AppHeader } from "@/components/dashboard/app-header";
+import { GoalFormDialog } from "@/components/dashboard/goal-form-dialog";
+import { GoalThrSection } from "@/components/dashboard/goal-thr-section";
 import { StatisticsSection } from "@/components/dashboard/statistics-section";
 import { SummaryCards } from "@/components/dashboard/summary-cards";
+import { useGoal } from "@/hooks/use-goal";
+import { TransactionFilters } from "@/components/transactions/transaction-filters";
+import { TransactionFormDialog } from "@/components/transactions/transaction-form-dialog";
+import { TransactionList } from "@/components/transactions/transaction-list";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,13 +23,15 @@ import {
   getExpenseByCategory,
   getTopTransactions,
 } from "@/lib/statistics";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
+import type { GoalFormValues, TransactionFormValues } from "@/lib/validation";
 import { type Transaction } from "@/types/transaction";
-import { TransactionFilters } from "@/components/transactions/transaction-filters";
-import { TransactionFormDialog } from "@/components/transactions/transaction-form-dialog";
-import type { TransactionFormValues } from "@/lib/validation";
-import { TransactionList } from "@/components/transactions/transaction-list";
 import { formatCurrencyIDR } from "@/utils/currency";
 import { exportTransactionsToCsv } from "@/utils/csv";
+
+interface ThrTrackerAppProps {
+  userEmail: string;
+}
 
 function LoadingState() {
   return (
@@ -32,17 +41,30 @@ function LoadingState() {
           <Skeleton key={index} className="h-28 rounded-2xl" />
         ))}
       </div>
+      <Skeleton className="h-56 rounded-2xl" />
       <Skeleton className="h-24 rounded-2xl" />
       <Skeleton className="h-80 rounded-2xl" />
     </div>
   );
 }
 
-export function ThrTrackerApp() {
+export function ThrTrackerApp({ userEmail }: ThrTrackerAppProps) {
+  const router = useRouter();
   const { transactions, isLoading, isMutating, error, refresh, add, edit, remove } =
     useTransactions();
+  const {
+    goal,
+    isLoading: isGoalLoading,
+    isMutating: isGoalMutating,
+    error: goalError,
+    refresh: refreshGoal,
+    save: saveGoal,
+    remove: removeGoal,
+  } = useGoal();
 
   const [formOpen, setFormOpen] = useState(false);
+  const [goalFormOpen, setGoalFormOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const [editingTransaction, setEditingTransaction] =
     useState<Transaction | null>(null);
 
@@ -79,6 +101,10 @@ export function ThrTrackerApp() {
   const handleOpenEdit = (transaction: Transaction) => {
     setEditingTransaction(transaction);
     setFormOpen(true);
+  };
+
+  const handleOpenGoalDialog = () => {
+    setGoalFormOpen(true);
   };
 
   const handleFormSubmit = async (values: TransactionFormValues) => {
@@ -120,9 +146,70 @@ export function ThrTrackerApp() {
     }
   };
 
+  const handleGoalSubmit = async (values: GoalFormValues) => {
+    try {
+      await saveGoal(values);
+      toast.success("Goal THR berhasil disimpan.");
+      setGoalFormOpen(false);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Terjadi kesalahan saat menyimpan goal.";
+      toast.error(message);
+      throw error;
+    }
+  };
+
+  const handleGoalDelete = async () => {
+    if (!goal) {
+      return;
+    }
+
+    const shouldDelete = window.confirm(
+      `Hapus goal \"${goal.title}\" dari dashboard?`,
+    );
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    try {
+      await removeGoal();
+      toast.success("Goal THR berhasil direset.");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Terjadi kesalahan saat menghapus goal.";
+      toast.error(message);
+    }
+  };
+
+  const handleLogout = async () => {
+    setIsSigningOut(true);
+    try {
+      const supabase = getSupabaseBrowserClient();
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        throw error;
+      }
+
+      toast.success("Anda sudah logout.");
+      router.replace("/login");
+      router.refresh();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Gagal logout.";
+      toast.error(message);
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
+
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 px-4 py-4 sm:gap-5 sm:px-6 sm:py-6 lg:py-8">
-      <AppHeader onAddTransaction={handleOpenCreate} />
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-4 overflow-x-clip px-3 py-4 sm:gap-5 sm:px-6 sm:py-6 lg:py-8">
+      <AppHeader
+        userEmail={userEmail}
+        onAddTransaction={handleOpenCreate}
+        onLogout={handleLogout}
+        isSigningOut={isSigningOut}
+      />
 
       {isLoading ? (
         <LoadingState />
@@ -140,6 +227,18 @@ export function ThrTrackerApp() {
         <>
           <SummaryCards summary={summary} />
 
+          <GoalThrSection
+            goal={goal}
+            saldo={summary.saldo}
+            isLoading={isGoalLoading}
+            isMutating={isGoalMutating}
+            error={goalError}
+            onCreate={handleOpenGoalDialog}
+            onEdit={handleOpenGoalDialog}
+            onDelete={() => void handleGoalDelete()}
+            onRetry={() => void refreshGoal()}
+          />
+
           <TransactionFilters
             type={type}
             onTypeChange={setType}
@@ -151,17 +250,20 @@ export function ThrTrackerApp() {
           />
 
           <section className="space-y-3">
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <h2 className="text-lg font-semibold text-emerald-950">Riwayat Transaksi</h2>
-              <div className="flex gap-2">
+              <div className="grid w-full grid-cols-1 gap-2 min-[430px]:grid-cols-2 sm:flex sm:w-auto sm:flex-wrap">
                 <Button
                   variant="outline"
                   onClick={() => exportTransactionsToCsv(filtered)}
                   disabled={filtered.length === 0}
+                  className="w-full sm:w-auto"
                 >
                   Export CSV
                 </Button>
-                <Button onClick={handleOpenCreate}>Tambah Transaksi</Button>
+                <Button onClick={handleOpenCreate} className="w-full sm:w-auto">
+                  Tambah Transaksi
+                </Button>
               </div>
             </div>
             {filtered.length === 0 && transactions.length > 0 ? (
@@ -199,6 +301,14 @@ export function ThrTrackerApp() {
         initialData={editingTransaction}
         isSubmitting={isMutating}
         onSubmit={handleFormSubmit}
+      />
+
+      <GoalFormDialog
+        open={goalFormOpen}
+        onOpenChange={setGoalFormOpen}
+        initialData={goal}
+        isSubmitting={isGoalMutating}
+        onSubmit={handleGoalSubmit}
       />
     </main>
   );
